@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 
 import 'package:barcode_scan/barcode_scan.dart';
+import 'package:qrreaderapp/src/bloc/scans_bloc.dart';
+import 'package:qrreaderapp/src/models/scan_model.dart';
 
 import 'package:qrreaderapp/src/pages/addresses_page.dart';
 import 'package:qrreaderapp/src/pages/maps_page.dart';
-import 'package:qrreaderapp/src/providers/db_provider.dart';
+import 'package:qrreaderapp/src/utils/launch_web_util.dart' as utils;
 
 class HomePage extends StatefulWidget {
   @override
@@ -12,6 +14,8 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+
+  final scanStream = new ScansBloc();
 
   int _currentPage = 0;
 
@@ -22,11 +26,7 @@ class _HomePageState extends State<HomePage> {
         title: Text('QR Scanner'),
         actions: <Widget>[
           IconButton(
-            onPressed: (){
-              setState(() {
-                DBProvider.db.deleteAll();
-              });
-            },
+            onPressed: scanStream.deleteAllScans,
             icon: Icon( Icons.delete_forever ),
           )
         ],
@@ -46,22 +46,21 @@ class _HomePageState extends State<HomePage> {
     // https://alfonsomora.xyz
     // geo:40.776185716054194,-74.03100386103519
 
-    //String futureString = '';
-    String futureString = 'https://alfonsomora.xyz';
+    String futureString = '';
+    //String futureString = 'https://alfonsomora.xyz';
+    //String futureString = 'geo:40.776185716054194,-74.03100386103519';
 
-//    try {
-//      futureString = await BarcodeScanner.scan();
-//    }
-//    catch (e){
-//      futureString = e.toString();
-//    }
+    try {
+      futureString = await BarcodeScanner.scan();
+    }
+    catch (e){
+      futureString = e.toString();
+    }
 
     if ( futureString != null){
-      setState(() {
-        final scanModel = new ScanModel(value: futureString);
-        DBProvider.db.newScan(scanModel);
-      });
-
+      final scanModel = new ScanModel(value: futureString);
+      scanStream.addScan(scanModel);
+      utils.launchURL(context, scanModel);
     }
 
   }
